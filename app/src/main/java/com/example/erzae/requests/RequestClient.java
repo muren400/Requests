@@ -33,6 +33,9 @@ public class RequestClient {
         }
 
         for (String url : urls){
+            if(url == null || url.trim().length() < 1)
+                continue;
+
             // Request a string response from the provided URL.
             StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                     new RequestResponseListener(context, progressDialog, responseListener),

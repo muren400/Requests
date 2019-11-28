@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.IBinder;
@@ -16,8 +17,13 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -94,11 +100,11 @@ public class NotificationService extends Service {
 
     @RequiresApi(Build.VERSION_CODES.O)
     private void startMyOwnForeground(){
-        String NOTIFICATION_CHANNEL_ID = "com.example.erzae.sockets";
+        String NOTIFICATION_CHANNEL_ID = "com.example.erzae.request";
         String channelName = "NotificationService";
-        NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE);
+        NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_HIGH);
         chan.setLightColor(Color.BLUE);
-        chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+        chan.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         assert manager != null;
         manager.createNotificationChannel(chan);
@@ -115,18 +121,44 @@ public class NotificationService extends Service {
             index++;
         }
 
+        RemoteViews view = new RemoteViews(getPackageName(), R.layout.notification);
+
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
-        notificationBuilder.setOngoing(true)
-                .setSmallIcon(R.drawable.icon)
-                .setPriority(NotificationManager.IMPORTANCE_MIN)
-                .setCategory(Notification.CATEGORY_SERVICE);
+        notificationBuilder.setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setOngoing(true)
+                .setSmallIcon(R.mipmap.ic_launcher);
 
         index = 0;
         for(PendingIntent intent : intents){
-            notificationBuilder.addAction(R.mipmap.ic_launcher, requestObjects.get(index++).getName(), intent);
+            RequestObject requestObject = requestObjects.get(index);
+            String strID = "notification_button_" + index++;
+            int id = getResId(strID, R.id.class);
+            if(id < 0)
+                continue;
+            view.setOnClickPendingIntent(id, intent);
+            view.setTextViewText(id, requestObject.getName());
         }
 
-        Notification notification = notificationBuilder.setContentIntent(intents.get(0)).build();
+        Notification notification = notificationBuilder.setContent(view)
+                .setStyle(new NotificationCompat.BigPictureStyle())
+                .setCustomContentView(view)
+                .setCustomBigContentView(view)
+                .setPriority(Notification.PRIORITY_MAX)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setColor(Color.BLACK)
+                .build();
+
         startForeground(1, notification);
+    }
+
+    private int getResId(String resName, Class<?> c) {
+
+        try {
+            Field idField = c.getDeclaredField(resName);
+            return idField.getInt(idField);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
     }
 }
