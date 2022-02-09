@@ -1,4 +1,4 @@
-package com.example.erzae.requests;
+package org.muren.requests;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -7,12 +7,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.DialogFragment;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Pair;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.DialogFragment;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -23,7 +24,7 @@ import java.util.List;
  */
 public class MainActivity extends AppCompatActivity {
 
-    public static final String ACTION_START = "com.example.erzae.requests.actionStart";
+    public static final String ACTION_START = "org.muren.requests.actionStart";
 
     public static final int MAX_REQUESTS = 10;
 

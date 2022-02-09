@@ -1,4 +1,4 @@
-package com.example.erzae.requests;
+package org.muren.requests;
 
 import org.junit.Test;
 
