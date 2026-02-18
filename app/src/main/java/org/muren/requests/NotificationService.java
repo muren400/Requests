@@ -8,20 +8,15 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -29,7 +24,6 @@ public class NotificationService extends Service {
 
     public static boolean isServiceRunning = false;
 
-    private RequestClient client;
     private BroadcastReceiver receiver;
     private List<RequestObject> requestObjects;
 
@@ -45,7 +39,7 @@ public class NotificationService extends Service {
     }
 
     void stopMyService() {
-        stopForeground(true);
+        stopForeground( STOP_FOREGROUND_REMOVE);
         stopSelf();
         isServiceRunning = false;
     }
@@ -54,22 +48,15 @@ public class NotificationService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        requestObjects = new ArrayList<>();
-        MainActivity.readPreferences(sharedPref, requestObjects);
+        requestObjects = MainActivity.readPreferences(this);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            startMyOwnForeground();
-        else
-            startForeground(1, new Notification());
-
-        client = new RequestClient();
+        startMyOwnForeground();
 
         // Create an IntentFilter instance.
         IntentFilter intentFilter = new IntentFilter();
 
         // Add network connectivity change action.
-        for(int i=0; i<MainActivity.MAX_REQUESTS; i++){
+        for(int i=0; i<requestObjects.size(); i++){
             intentFilter.addAction(BroadcastReceiver.ACTION_STUB + i);
         }
 
@@ -77,7 +64,7 @@ public class NotificationService extends Service {
         intentFilter.setPriority(100);
 
         // Create a network change broadcast receiver.
-        receiver = new BroadcastReceiver(client, requestObjects);
+        receiver = new BroadcastReceiver(requestObjects);
 
         // Register the broadcast receiver with the intent filter object.
         registerReceiver(receiver, intentFilter);
@@ -95,7 +82,6 @@ public class NotificationService extends Service {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private void startMyOwnForeground(){
         String NOTIFICATION_CHANNEL_ID = "com.example.erzae.request";
         String channelName = "NotificationService";
@@ -112,40 +98,56 @@ public class NotificationService extends Service {
             Intent toggleIntent = new Intent(this, BroadcastReceiver.class);
             toggleIntent.setAction(BroadcastReceiver.ACTION_STUB + index);
             PendingIntent pendingIntent =
-                    PendingIntent.getBroadcast(this, 0, toggleIntent, 0);
+                    PendingIntent.getBroadcast(this, 0, toggleIntent, PendingIntent.FLAG_IMMUTABLE);
             intents.add(pendingIntent);
 
             index++;
         }
 
-        RemoteViews view = new RemoteViews(getPackageName(), R.layout.notification);
-
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
-        notificationBuilder.setVisibility(Notification.VISIBILITY_PUBLIC)
+        notificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOngoing(true)
                 .setSmallIcon(R.mipmap.ic_launcher);
 
-        index = 0;
-        for(PendingIntent intent : intents){
-            RequestObject requestObject = requestObjects.get(index);
-            String strID = "notification_button_" + index++;
-            int id = getResId(strID, R.id.class);
-            if(id < 0)
-                continue;
-            view.setOnClickPendingIntent(id, intent);
-            view.setTextViewText(id, requestObject.getName());
-        }
+        RemoteViews view = new RemoteViews(getPackageName(), R.layout.notification);
+        populateButtonRows(view, intents);
 
         Notification notification = notificationBuilder.setContent(view)
                 .setStyle(new NotificationCompat.BigPictureStyle())
                 .setCustomContentView(view)
                 .setCustomBigContentView(view)
-                .setPriority(Notification.PRIORITY_MAX)
-                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setPriority(NotificationManager.IMPORTANCE_HIGH)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setColor(Color.BLACK)
                 .build();
 
         startForeground(1, notification);
+    }
+
+    private void populateButtonRows(RemoteViews view, List<PendingIntent> intents) {
+        RemoteViews viewRow = null;
+
+        int index = 0;
+        for(PendingIntent intent : intents){
+            var indexInRow = index % 4;
+            if(indexInRow % 4 == 0) {
+                viewRow = new RemoteViews(getPackageName(), R.layout.notification_request_item_row);
+                view.addView(R.id.notification, viewRow);
+            }
+
+            RequestObject requestObject = requestObjects.get(index);
+            String strID = "notification_row_button_" + indexInRow;
+
+            index++;
+
+            int id = getResId(strID, R.id.class);
+            if(id < 0) {
+                continue;
+            }
+
+            viewRow.setOnClickPendingIntent(id, intent);
+            viewRow.setTextViewText(id, requestObject.getName());
+        }
     }
 
     private int getResId(String resName, Class<?> c) {

@@ -20,8 +20,9 @@ public class RequestClient {
 
     public void makeRequest(final Context context, List<String> urls,
                             final Response.Listener responseListener, final Response.ErrorListener errorListener, String progressMessage){
-        if(urls == null || urls.size() < 1)
+        if(urls == null || urls.isEmpty()) {
             return;
+        }
 
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(context);

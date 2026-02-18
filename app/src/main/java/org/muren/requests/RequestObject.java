@@ -1,5 +1,6 @@
 package org.muren.requests;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RequestObject {
@@ -7,6 +8,11 @@ public class RequestObject {
 
     private String name = "";
     private List<String> urls = null;
+
+    public RequestObject(String name){
+        this.name = name;
+        this.urls = new ArrayList<>();
+    }
 
     public RequestObject(String name, List<String> urls){
         this.name = name;
@@ -24,5 +30,9 @@ public class RequestObject {
     }
     public void setUrls(List<String> urls) {
         this.urls = urls;
+    }
+
+    public void addUrl(String url) {
+        urls.add(url);
     }
 }

@@ -21,10 +21,10 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
         requestObjects = null;
     }
 
-    public BroadcastReceiver(RequestClient client, List<RequestObject> requestObjects){
+    public BroadcastReceiver(List<RequestObject> requestObjects){
         super();
 
-        this.client = client;
+        this.client = new RequestClient();
         this.requestObjects = requestObjects;
     }
 
@@ -36,9 +36,7 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
         }
 
         if(requestObjects == null || requestObjects.isEmpty()){
-            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
-            requestObjects = new ArrayList<>();
-            MainActivity.readPreferences(sharedPref, requestObjects);
+            requestObjects = MainActivity.readPreferences(context);
             if(requestObjects == null || requestObjects.isEmpty()){
                 Toast.makeText(context, "no requests selected", Toast.LENGTH_LONG).show();
                 return;
