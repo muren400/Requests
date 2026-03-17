@@ -27,6 +27,8 @@ public class NotificationService extends Service {
     private BroadcastReceiver receiver;
     private List<RequestObject> requestObjects;
 
+    private PebbleCompanion companion;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -122,6 +124,8 @@ public class NotificationService extends Service {
                 .build();
 
         startForeground(1, notification);
+
+        companion = new PebbleCompanion(requestObjects, this);
     }
 
     private void populateButtonRows(RemoteViews view, List<PendingIntent> intents) {

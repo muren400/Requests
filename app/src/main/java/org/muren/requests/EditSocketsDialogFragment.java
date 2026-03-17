@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
@@ -19,6 +20,17 @@ import java.util.List;
 public class EditSocketsDialogFragment extends DialogFragment {
     private MainActivity mainActivity;
     private RequestTextView requestTextView;
+
+    public EditSocketsDialogFragment(View view, MainActivity mainActivity) {
+        if(!(view instanceof RequestTextView)) {
+            return;
+        }
+
+        this.requestTextView = (RequestTextView) view;
+        this.mainActivity = mainActivity;
+
+        show(mainActivity.getSupportFragmentManager(), "test");
+    }
 
     @NonNull
     @Override
@@ -72,7 +84,8 @@ public class EditSocketsDialogFragment extends DialogFragment {
 
                         requestObject.setName(inputName.getText().toString());
                         requestObject.setUrls(urls);
-                        mainActivity.updateList();
+                        requestTextView.setText(inputName.getText().toString());
+
                         mainActivity.writePreferences();
                     }
                 })
@@ -83,13 +96,5 @@ public class EditSocketsDialogFragment extends DialogFragment {
                 });
 
         return builder.create();
-    }
-
-    public void setRequestTextView(RequestTextView requestTextView) {
-        this.requestTextView = requestTextView;
-    }
-
-    public void setMainActivity(MainActivity mainActivity) {
-        this.mainActivity = mainActivity;
     }
 }
