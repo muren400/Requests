@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
         requestObjects = readPreferences(this);
         initRequestClient();
         initRecyclerView();
-        startNotificationService();
+        startNotificationService(false);
     }
 
     private void initRequestClient()  {
@@ -51,9 +51,14 @@ public class MainActivity extends AppCompatActivity {
         itemTouchHelper.attachToRecyclerView(recyclerView);
     }
 
-    private void startNotificationService() {
+    private void startNotificationService(boolean restart) {
         Intent backgroundService = new Intent(getApplicationContext(), NotificationService.class);
         backgroundService.setAction(ACTION_START);
+
+        if(restart) {
+            stopService(backgroundService);
+        }
+
         startService(backgroundService);
     }
 
@@ -71,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void writePreferences(){
         new RequestsConfig().writeConfig(requestObjects, this);
+        startNotificationService(true);
     }
 
     public static List<RequestObject> readPreferences(Context context) {
